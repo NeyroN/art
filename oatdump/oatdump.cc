@@ -970,7 +970,7 @@ class ImageDumper {
         image_header_(image_header),
         oat_dumper_options_(oat_dumper_options) {}
 
-  bool Dump() SHARED_LOCKS_REQUIRED(Locks::mutator_lock_) {
+  void Dump1() SHARED_LOCKS_REQUIRED(Locks::mutator_lock_)  {
     std::ostream& os = *os_;
     os << "MAGIC: " << image_header_.GetMagic() << "\n\n";
 
@@ -992,7 +992,6 @@ class ImageDumper {
     os << "PATCH DELTA:" << image_header_.GetPatchDelta() << "\n\n";
 
     os << "COMPILE PIC: " << (image_header_.CompilePic() ? "yes" : "no") << "\n\n";
-
     {
       os << "ROOTS: " << reinterpret_cast<void*>(image_header_.GetImageRoots()) << "\n";
       Indenter indent1_filter(os.rdbuf(), kIndentChar, kIndentBy1Count);
@@ -1035,6 +1034,12 @@ class ImageDumper {
     }
     os << "\n";
 
+  }
+
+  bool Dump() SHARED_LOCKS_REQUIRED(Locks::mutator_lock_) {
+    std::ostream& os = *os_;
+    Dump1();
+
     ClassLinker* class_linker = Runtime::Current()->GetClassLinker();
     std::string image_filename = image_space_.GetImageFilename();
     std::string oat_location = ImageHeader::GetOatLocationFromImageLocation(image_filename);
@@ -1050,7 +1055,6 @@ class ImageDumper {
       }
     }
     os << "\n";
-
     stats_.oat_file_bytes = oat_file->Size();
 
     oat_dumper_.reset(new OatDumper(*oat_file, oat_dumper_options_.release()));
